@@ -7,12 +7,13 @@ A production-ready **reference architecture for a full-stack application using D
   - [Configuration (Secrets)](#configuration-secrets)
   - [Run in Development Mode](#run-in-development-mode)
   - [Run in Production Mode (Simulated)](#run-in-production-mode-simulated)
-- [Development Workflow (VS Code Remote)](#development-workflow-vs-code-remote)
-  - [1. Prerequisites](#1-prerequisites)
+- [Development Workflow](#development-workflow)
+  - [1. Open the Project](#1-open-the-project)
   - [2. Start the Environment](#2-start-the-environment)
-  - [3. Attach VS Code to a Service](#3-attach-vs-code-to-a-service)
-  - [4. The "Inner" Workflow](#4-the-inner-workflow)
-  - [5. Database Management](#5-database-management)
+  - [3. Connect VS Code to the Container](#3-connect-vs-code-to-the-container)
+  - [4. Initialize the Workspace (First Time Only)](#4-initialize-the-workspace-first-time-only)
+  - [5. Your Dev Environment](#5-your-dev-environment)
+  - [6. Managing the Database](#6-managing-the-database)
 - [Project Structure](#project-structure)
 - [Key Concepts \& Best Practices](#key-concepts--best-practices)
   - [Nginx as a Reverse Proxy](#nginx-as-a-reverse-proxy)
@@ -83,58 +84,68 @@ docker compose -f compose.prod.yaml up --build
 
 -----
 
-## Development Workflow (VS Code Remote)
+## Development Workflow
 
-Since dependencies (Node, Postgres) are not installed on your host machine, standard VS Code will show errors (missing imports) and cannot run commands. To fix this, we use the **Attach to Running Container** feature.
+This project is designed to run entirely inside Docker. You do not need Node.js, PostgreSQL, or other tools installed on your host machine.
 
-### 1\. Prerequisites
+### 1\. Open the Project
 
-Install the **Dev Containers** extension (Microsoft) in VS Code.
+Open your terminal (Command Prompt, PowerShell, or Terminal) and navigate to the (github repo) project folder.
+
+Start Visual Studio Code in this folder:
+
+```bash
+code .
+```
 
 ### 2\. Start the Environment
 
-Open a terminal in your project root and run:
+In VS Code, open the integrated terminal (`Ctrl` + `` ` ``) and run:
 
 ```bash
 docker compose up --build
 ```
 
-### 3\. Attach VS Code to a Service
+*Wait for the logs to say the backend and database are ready.*
 
-1. Open the Command Palette (`F1` or `Ctrl+Shift+P`).
+### 3\. Connect VS Code to the Container
+
+To get IntelliSense, Git integration, and terminal access, we must "Attach" VS Code to the running backend container.
+
+1. Press `F1` (or `Ctrl+Shift+P`) to open the Command Palette.
 2. Type and select: **Dev Containers: Attach to Running Container...**
-3. Select the service you want to edit (e.g., `/backend` or `/frontend`).
-4. VS Code will open a **new window**.
+3. Select the backend service (e.g., `lab-dev-backend-1`).
+4. **A new VS Code window will open.**
 
-### 4\. The "Inner" Workflow
+### 4\. Initialize the Workspace (First Time Only)
 
-This new window runs *inside* the Docker container.
+The new window might show an empty screen or the wrong folder.
 
-- **IntelliSense:** Works perfectly because VS Code can now see the `node_modules` inside the container.
-- **Terminal:** The terminal in this window is a Linux shell inside the container.
-- **Installing Packages:** Run `npm` commands directly in the integrated terminal:
+1. In the new window, click the blue **Open Folder** button (or go to **File \> Open Folder**).
+2. Type exactly: `/workspace`
+3. Click **OK**.
 
-    ```bash
-    # You are already inside the container
-    npm install uuid
-    ```
+### 5\. Your Dev Environment
 
-    *(This updates `package.json` on your host via the volume mount).*
+You are now working inside the container.
 
-### 5\. Database Management
+- **Edit Code:** Full IntelliSense is active. Edit files normally; they save instantly to your host machine.
+- **Terminal:** The terminal in this window is a Linux shell.
+- **Git:** You can use the Source Control tab or run `git` commands in the terminal (e.g., `git commit -m "wip"`).
+- **NPM:** Run commands directly: `npm install uuid`.
 
-To inspect the database without a local SQL client, use the container's built-in tool.
+### 6\. Managing the Database
 
-1. Attach VS Code to the `db` container (or use the external terminal):
+To inspect the database, open a terminal **inside the attached VS Code window**:
 
-    ```bash
-    docker compose exec db psql -U appuser -d appdb
-    ```
+```bash
+# Connect to Postgres
+psql -h db -U appuser -d appdb
+```
 
-2. Run SQL commands:
-      - `\dt` : List tables
-      - `select * from todos;` : View data
-      - `\q` : Quit
+- `\dt` : List tables
+- `select * from todos;` : View data
+- `\q` : Quit
 
 -----
 
