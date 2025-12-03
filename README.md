@@ -1,5 +1,7 @@
 # Docker Compose Lab: Node, Vue, Postgres & Nginx
 
+![screenshot](./assets/screenshot.png)
+
 A production-ready **reference architecture for a full-stack application using Docker Compose**. This repository demonstrates the differences between **Development** (hot-reloading, bind mounts) and **Production** (multi-stage builds, static assets, immutable images) workflows.
 
 - [Stack Architecture](#stack-architecture)

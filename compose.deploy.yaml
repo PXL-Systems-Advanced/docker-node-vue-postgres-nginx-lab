@@ -22,7 +22,7 @@ services:
       retries: 5
 
   backend:
-    image: ${DOCKERHUB_USERNAME}/lab-backend:latest
+    image: ${DOCKERHUB_USERNAME}/lab-backend:main
     restart: always
     env_file: .env
     environment:
@@ -40,7 +40,7 @@ services:
       - app-net
 
   web:
-    image: ${DOCKERHUB_USERNAME}/lab-web:latest
+    image: ${DOCKERHUB_USERNAME}/lab-web:main
     restart: always
     ports:
       - "80:80"
