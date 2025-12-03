@@ -7,6 +7,12 @@ A production-ready **reference architecture for a full-stack application using D
   - [Configuration (Secrets)](#configuration-secrets)
   - [Run in Development Mode](#run-in-development-mode)
   - [Run in Production Mode (Simulated)](#run-in-production-mode-simulated)
+- [Development Workflow (VS Code Remote)](#development-workflow-vs-code-remote)
+  - [1. Prerequisites](#1-prerequisites)
+  - [2. Start the Environment](#2-start-the-environment)
+  - [3. Attach VS Code to a Service](#3-attach-vs-code-to-a-service)
+  - [4. The "Inner" Workflow](#4-the-inner-workflow)
+  - [5. Database Management](#5-database-management)
 - [Project Structure](#project-structure)
 - [Key Concepts \& Best Practices](#key-concepts--best-practices)
   - [Nginx as a Reverse Proxy](#nginx-as-a-reverse-proxy)
@@ -74,6 +80,61 @@ docker compose -f compose.prod.yaml up --build
   - **Frontend:** The `nginx/Dockerfile.prod` runs a **Multi-Stage Build**. It compiles Vue into static HTML/CSS/JS and discards the Node environment, resulting in a tiny Nginx image serving raw files.
   - **Backend:** Runs with `node` instead of `nodemon`.
   - **Secrets:** *Note: In this lab, we still read from `.env`. In a real production environment, secrets are injected via a vault (e.g., [AWS Secrets Manager](https://aws.amazon.com/secrets-manager/), [HashiCorp Vault](https://www.hashicorp.com/en/products/vault)), not a file.*
+
+-----
+
+## Development Workflow (VS Code Remote)
+
+Since dependencies (Node, Postgres) are not installed on your host machine, standard VS Code will show errors (missing imports) and cannot run commands. To fix this, we use the **Attach to Running Container** feature.
+
+### 1\. Prerequisites
+
+Install the **Dev Containers** extension (Microsoft) in VS Code.
+
+### 2\. Start the Environment
+
+Open a terminal in your project root and run:
+
+```bash
+docker compose up --build
+```
+
+### 3\. Attach VS Code to a Service
+
+1. Open the Command Palette (`F1` or `Ctrl+Shift+P`).
+2. Type and select: **Dev Containers: Attach to Running Container...**
+3. Select the service you want to edit (e.g., `/backend` or `/frontend`).
+4. VS Code will open a **new window**.
+
+### 4\. The "Inner" Workflow
+
+This new window runs *inside* the Docker container.
+
+- **IntelliSense:** Works perfectly because VS Code can now see the `node_modules` inside the container.
+- **Terminal:** The terminal in this window is a Linux shell inside the container.
+- **Installing Packages:** Run `npm` commands directly in the integrated terminal:
+
+    ```bash
+    # You are already inside the container
+    npm install uuid
+    ```
+
+    *(This updates `package.json` on your host via the volume mount).*
+
+### 5\. Database Management
+
+To inspect the database without a local SQL client, use the container's built-in tool.
+
+1. Attach VS Code to the `db` container (or use the external terminal):
+
+    ```bash
+    docker compose exec db psql -U appuser -d appdb
+    ```
+
+2. Run SQL commands:
+      - `\dt` : List tables
+      - `select * from todos;` : View data
+      - `\q` : Quit
 
 -----
 
