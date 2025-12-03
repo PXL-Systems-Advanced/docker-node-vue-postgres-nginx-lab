@@ -12,10 +12,10 @@ on:
 
 env:
   # TODO: Change this to your Docker Hub username
-  DOCKERHUB_USERNAME: tomcoolpxl
+  DOCKERHUB_USERNAME: pxlsystemsadvanced
   # Image names
-  BACKEND_IMAGE: tomcoolpxl/lab-backend
-  WEB_IMAGE: tomcoolpxl/lab-web
+  BACKEND_IMAGE: pxlsystemsadvanced/lab-backend
+  WEB_IMAGE: pxlsystemsadvanced/lab-web
 
 jobs:
   build-and-push:
