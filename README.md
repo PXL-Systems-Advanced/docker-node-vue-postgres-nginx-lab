@@ -22,8 +22,10 @@ A production-ready **reference architecture for a full-stack application using D
   - [Database Persistence](#database-persistence)
   - [Security Basics](#security-basics)
 - [CI/CD Pipeline (GitHub Actions)](#cicd-pipeline-github-actions)
-  - [Workflow Features](#workflow-features)
   - [Setup Instructions](#setup-instructions)
+    - [1. Generate Token (Docker Hub)](#1-generate-token-docker-hub)
+    - [2. Add Secrets (GitHub)](#2-add-secrets-github)
+    - [3. Update Workflow Config](#3-update-workflow-config)
 - [Troubleshooting](#troubleshooting)
 
 ## Stack Architecture
@@ -220,40 +222,51 @@ Postgres data is stored in a **Docker Volume** (`db-data`).
 
 ## CI/CD Pipeline (GitHub Actions)
 
-This repository includes a `.github/workflows/ci-cd.yml` file
-
-[Image of CI/CD pipeline flow diagram]
-to automate building and pushing images to Docker Hub.
-
-### Workflow Features
-
-- **Modern Caching:** Uses `type=gha` (GitHub Actions Cache) to store Docker layers. This drastically reduces build time by reusing layers (like `npm install`) from previous runs.
-- **Automated Tagging:** Uses `docker/metadata-action` to handle versioning.
-  - Pushing to `main` → tags image as `main`.
-  - Pushing a git tag `v1.0.0` → tags image as `1.0.0` and `latest`.
-- **Security:** Credentials are injected via repository secrets, never hardcoded.
+This repository includes a `.github/workflows/ci-cd.yml` file to automatically build and push images to Docker Hub when you push code.
 
 ### Setup Instructions
 
-To enable the workflow on your own fork:
+To enable the workflow on your own fork, you need to provide your Docker Hub credentials to GitHub.
 
-1. **Docker Hub Setup:**
+#### 1\. Generate Token (Docker Hub)
 
-      - Create a repository on Docker Hub.
-      - Go to **Account Settings \> Security \> New Access Token**.
-      - Create a Read/Write/Delete token. *Do not use your password.*
+1. Log in to [Docker Hub](https://hub.docker.com/).
+2. Go to **Account Settings \> Security**.
+3. Click **New Access Token**.
+4. **Description:** `GitHub Actions`
+5. **Access Permissions:** Read, Write, Delete.
+6. **Copy** the generated token (starts with `dckr_pat_...`).
 
-2. **GitHub Secrets:**
+#### 2\. Add Secrets (GitHub)
 
-      - Go to your Repo Settings \> Secrets and variables \> Actions.
-      - Add `DOCKERHUB_USERNAME`.
-      - Add `DOCKERHUB_TOKEN` (paste the token created above).
+*Do not put these in "Variables". They must be "Secrets".*
 
-3. **Update Workflow Variables:**
+1. Go to your GitHub Repository.
+2. Click **Settings** (top tab) \> **Secrets and variables** (left menu) \> **Actions**.
+3. Under the **Repository secrets** section, click **New repository secret**.
+4. Add the **Username**:
+      - **Name:** `DOCKERHUB_USERNAME`
+      - **Secret:** Your actual Docker Hub username (e.g., `jdoe123`).
+5. Add the **Token**:
+      - **Name:** `DOCKERHUB_TOKEN`
+      - **Secret:** Paste the `dckr_pat_...` token you copied earlier.
 
-      - Edit `.github/workflows/ci-cd.yml`.
-      - Update `env.BACKEND_IMAGE` and `env.WEB_IMAGE` to match your Docker Hub repository names.
+#### 3\. Update Workflow Config
 
+1. Open `.github/workflows/ci-cd.yml` in your code editor.
+2. Edit the `env` section near the top:
+
+    ```yaml
+    env:
+      # Replace with YOUR Docker Hub username
+      DOCKERHUB_USERNAME: jdoe123
+      # Replace with YOUR desired image names
+      BACKEND_IMAGE: jdoe123/lab-backend
+      WEB_IMAGE: jdoe123/lab-web
+    ```
+
+3. Commit and push these changes to the `main` branch. This will trigger your first build.
+  
 -----
 
 ## Troubleshooting
