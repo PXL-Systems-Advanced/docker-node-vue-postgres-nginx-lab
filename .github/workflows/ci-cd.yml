@@ -12,10 +12,10 @@ on:
 
 env:
   # TODO: Change this to your Docker Hub username
-  DOCKERHUB_USERNAME: my-dockerhub-username
+  DOCKERHUB_USERNAME: tomcoolpxl
   # Image names
-  BACKEND_IMAGE: my-dockerhub-username/lab-backend
-  WEB_IMAGE: my-dockerhub-username/lab-web
+  BACKEND_IMAGE: tomcoolpxl/lab-backend
+  WEB_IMAGE: tomcoolpxl/lab-web
 
 jobs:
   build-and-push:
@@ -58,10 +58,11 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: ./backend
+          file: ./backend/Dockerfile.prod
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta-backend.outputs.tags }}
           labels: ${{ steps.meta-backend.outputs.labels }}
-          # Modern Caching: 'gha' mode writes to GitHub Actions Cache
+          # 'gha' mode writes to GitHub Actions Cache
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
