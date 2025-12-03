@@ -5,6 +5,7 @@
 A production-ready **reference architecture for a full-stack application using Docker Compose**. This repository demonstrates the differences between **Development** (hot-reloading, bind mounts) and **Production** (multi-stage builds, static assets, immutable images) workflows.
 
 - [Stack Architecture](#stack-architecture)
+- [Network Architecture:\*\*](#network-architecture)
 - [Getting Started](#getting-started)
   - [Configuration (Secrets)](#configuration-secrets)
   - [Run in Development Mode](#run-in-development-mode)
@@ -38,6 +39,31 @@ A production-ready **reference architecture for a full-stack application using D
 | **Frontend** | Vue 3 + Vite | Single Page Application (SPA) |
 | **Backend** | Node 22 + Express | REST API |
 | **Database** | PostgreSQL 16 | Persistent data storage |
+
+## Network Architecture:**
+
+```mermaid
+graph TB
+    Browser[Browser<br/>Port 80]
+    
+    subgraph Docker["Docker Network (app-net)"]
+        Nginx[Nginx<br/>Reverse Proxy<br/>:80]
+        Frontend[Frontend<br/>Vue 3 + Vite<br/>:5173]
+        Backend[Backend<br/>Node.js + Express<br/>:3000]
+        DB[(PostgreSQL<br/>Database<br/>:5432)]
+    end
+    
+    Browser -->|HTTP| Nginx
+    Nginx -->|/ requests| Frontend
+    Nginx -->|/api/* requests| Backend
+    Backend -->|SQL queries| DB
+    
+    style Browser fill:#e1f5ff
+    style Nginx fill:#ff9999
+    style Frontend fill:#99ff99
+    style Backend fill:#ffcc99
+    style DB fill:#cc99ff
+```
 
 -----
 
