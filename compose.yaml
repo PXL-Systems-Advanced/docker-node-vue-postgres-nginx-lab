@@ -12,6 +12,9 @@ services:
       - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
     networks:
       - app-net
+    # Expose Postgres port for local access (e.g., pgAdmin, DB clients)
+    ports:
+      - "5432:5432"
     # check to ensure DB is **ready** before other services start
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
