@@ -1,0 +1,92 @@
+name: Build and Push Docker Images
+
+on:
+  push:
+    branches: [ "main" ]
+    # Also trigger on version tags (e.g., v1.0.0)
+    tags: [ 'v*.*.*' ]
+  pull_request:
+    branches: [ "main" ]
+  # Temporary manual trigger for testing
+  workflow_dispatch:
+
+env:
+  # TODO: Change this to your Docker Hub username
+  DOCKERHUB_USERNAME: my-dockerhub-username
+  # Image names
+  BACKEND_IMAGE: my-dockerhub-username/lab-backend
+  WEB_IMAGE: my-dockerhub-username/lab-web
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # 1. Set up Docker Buildx (Required for caching & multi-platform builds)
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      # 2. Login to Docker Hub (Only on push, not PRs)
+      - name: Login to Docker Hub
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      # --- BACKEND BUILD ---
+
+      # 3. Extract metadata (tags, labels) for Backend
+      - name: Extract metadata (Backend)
+        id: meta-backend
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.BACKEND_IMAGE }}
+          tags: |
+            type=ref,event=branch
+            type=semver,pattern={{version}}
+            type=sha
+
+      # 4. Build and Push Backend
+      - name: Build and push Backend
+        uses: docker/build-push-action@v6
+        with:
+          context: ./backend
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ steps.meta-backend.outputs.tags }}
+          labels: ${{ steps.meta-backend.outputs.labels }}
+          # Modern Caching: 'gha' mode writes to GitHub Actions Cache
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      # --- FRONTEND/NGINX BUILD ---
+
+      # 5. Extract metadata (Web)
+      - name: Extract metadata (Web)
+        id: meta-web
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.WEB_IMAGE }}
+          tags: |
+            type=ref,event=branch
+            type=semver,pattern={{version}}
+            type=sha
+
+      # 6. Build and Push Web (Nginx + Vue)
+      - name: Build and push Web
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./nginx/Dockerfile.prod
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ steps.meta-web.outputs.tags }}
+          labels: ${{ steps.meta-web.outputs.labels }}
+          # Isolate cache for web to prevent overwriting backend cache
+          cache-from: type=gha,scope=web
+          cache-to: type=gha,mode=max,scope=web

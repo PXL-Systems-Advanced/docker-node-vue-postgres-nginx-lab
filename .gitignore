@@ -1,3 +1,11 @@
+# exclude for lab construction
+compose.yaml
+compose.prod.yaml
+compose.dev.yaml
+Dockerfile
+Dockerfile.prod
+Dockerfile.dev
+
 # Logs
 logs
 *.log

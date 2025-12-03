@@ -1,0 +1,8 @@
+CREATE TABLE IF NOT EXISTS todos (
+    id SERIAL PRIMARY KEY,
+    title TEXT NOT NULL,
+    completed BOOLEAN NOT NULL DEFAULT FALSE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+INSERT INTO todos (title) VALUES ('Docker Lab Initialized');
