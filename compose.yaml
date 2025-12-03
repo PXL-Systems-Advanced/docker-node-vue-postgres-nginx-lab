@@ -1,0 +1,90 @@
+name: lab-dev
+
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - db-data:/var/lib/postgresql/data
+      - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    networks:
+      - app-net
+    # check to ensure DB is **ready** before other services start
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    env_file: .env
+    environment:
+      NODE_ENV: development
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_NAME: ${POSTGRES_DB}
+      DB_USER: ${POSTGRES_USER}
+      DB_PASSWORD: ${POSTGRES_PASSWORD}
+      PORT: ${BACKEND_PORT:-3000}
+    
+    # Set working directory to the backend subfolder
+    working_dir: /workspace/backend
+    volumes:
+      # Mount the ENTIRE repository to /workspace (Includes .git, frontend, backend)
+      - ./:/workspace
+      # Isolate node_modules so they don't sync to host
+      - /workspace/backend/node_modules
+    # --------------------------------------
+
+    command: ["npm", "run", "dev"]
+    depends_on:
+      db:
+        # Ensure DB is ready before starting backend
+        condition: service_healthy
+    networks:
+      - app-net
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    env_file: .env
+    environment:
+      # Base URL for API requests
+      VITE_API_BASE_URL: ${VITE_API_BASE_URL}
+    
+    working_dir: /workspace/frontend
+    volumes:
+      # Mount the ENTIRE repository to /workspace (Includes .git, frontend, backend)
+      - ./:/workspace
+      # Isolate node_modules so they don't sync to host
+      - /workspace/frontend/node_modules
+    
+    # "0.0.0.0" to allow access from outside the container
+    command: ["npm", "run", "dev", "--", "--host", "0.0.0.0", "--port", "5173"]
+    networks:
+      - app-net
+
+  nginx:
+    image: nginx:1.27-alpine
+    volumes:
+      - ./nginx/nginx.dev.conf:/etc/nginx/nginx.conf:ro
+    ports:
+      - "80:80"
+    depends_on:
+      - frontend
+      - backend
+    networks:
+      - app-net
+
+networks:
+  app-net:
+
+volumes:
+  db-data:
