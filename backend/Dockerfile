@@ -1,10 +1,8 @@
 # syntax=docker/dockerfile:1
 FROM node:24-alpine
-RUN apk add --no-cache git
-RUN git config --system --add safe.directory /workspace
-WORKDIR /workspace/backend
+WORKDIR /app
 COPY package*.json ./
-RUN npm install
+RUN npm ci
 COPY . .
 EXPOSE 3000
 CMD ["npm", "run", "dev"]

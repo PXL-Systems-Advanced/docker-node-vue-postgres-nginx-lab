@@ -16,6 +16,8 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+    networks:
+      - backend
 
   backend:
     image: ${DOCKERHUB_USERNAME}/lab-backend:main
@@ -28,6 +30,9 @@ services:
     depends_on:
       db:
         condition: service_healthy
+    networks:
+      - frontend
+      - backend
 
   web:
     image: ${DOCKERHUB_USERNAME}/lab-web:main
@@ -36,6 +41,12 @@ services:
       - "127.0.0.1:8080:80"
     depends_on:
       - backend
+    networks:
+      - frontend
+
+networks:
+  frontend:
+  backend:
 
 volumes:
   db-data:

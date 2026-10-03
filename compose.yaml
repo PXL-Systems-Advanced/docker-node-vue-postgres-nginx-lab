@@ -10,13 +10,13 @@ services:
     volumes:
       - db-data:/var/lib/postgresql/data
       - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
-    ports:
-      - "127.0.0.1:5432:5432"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
       interval: 5s
       timeout: 5s
       retries: 5
+    networks:
+      - backend
 
   backend:
     build: ./backend
@@ -25,18 +25,31 @@ services:
       DB_NAME: ${POSTGRES_DB}
       DB_USER: ${POSTGRES_USER}
       DB_PASSWORD: ${POSTGRES_PASSWORD}
-    volumes:
-      - ./:/workspace
-      - /workspace/backend/node_modules
     depends_on:
       db:
         condition: service_healthy
+    networks:
+      - frontend
+      - backend
+    develop:
+      watch:
+        - action: sync
+          path: ./backend/src
+          target: /app/src
+        - action: rebuild
+          path: ./backend/package.json
 
   frontend:
     build: ./frontend
-    volumes:
-      - ./:/workspace
-      - /workspace/frontend/node_modules
+    networks:
+      - frontend
+    develop:
+      watch:
+        - action: sync
+          path: ./frontend/src
+          target: /app/src
+        - action: rebuild
+          path: ./frontend/package.json
 
   nginx:
     image: nginx:1.30-alpine
@@ -47,6 +60,12 @@ services:
     depends_on:
       - frontend
       - backend
+    networks:
+      - frontend
+
+networks:
+  frontend:
+  backend:
 
 volumes:
   db-data:
