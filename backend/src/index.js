@@ -6,18 +6,16 @@ const port = Number(process.env.PORT || 3000);
 
 app.use(express.json());
 
-// Health Check
 app.get("/api/health", async (req, res) => {
   try {
-    const result = await query("SELECT NOW() as now");
+    const result = await query("SELECT NOW() AS now");
     res.json({ status: "ok", time: result.rows[0].now });
   } catch (err) {
-    console.error("Health Check Failed:", err);
+    console.error("Health check failed:", err);
     res.status(500).json({ status: "error" });
   }
 });
 
-// Get Todos
 app.get("/api/todos", async (req, res) => {
   try {
     const result = await query(
@@ -30,17 +28,16 @@ app.get("/api/todos", async (req, res) => {
   }
 });
 
-// Create Todo
 app.post("/api/todos", async (req, res) => {
-  const { title } = req.body;
-  if (!title || !title.trim()) {
+  const title = req.body?.title?.trim();
+  if (!title) {
     return res.status(400).json({ error: "Title is required" });
   }
 
   try {
     const result = await query(
-      "INSERT INTO todos (title, completed) VALUES ($1, false) RETURNING id, title, completed",
-      [title.trim()]
+      "INSERT INTO todos (title) VALUES ($1) RETURNING id, title, completed",
+      [title]
     );
     res.status(201).json(result.rows[0]);
   } catch (err) {
@@ -53,15 +50,11 @@ const server = app.listen(port, () => {
   console.log(`Backend listening on port ${port}`);
 });
 
-// Graceful Shutdown
-const shutdown = () => {
-  console.log("SIGTERM/SIGINT received. Shutting down gracefully...");
-  server.close(() => {
-    console.log("HTTP server closed.");
-    end().then(() => {
-      console.log("Database pool closed.");
-      process.exit(0);
-    });
+const shutdown = (signal) => {
+  console.log(`${signal} received, shutting down`);
+  server.close(async () => {
+    await end();
+    process.exit(0);
   });
 };
 

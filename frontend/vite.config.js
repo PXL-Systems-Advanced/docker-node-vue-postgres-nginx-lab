@@ -1,15 +1,16 @@
-import { defineConfig } from 'vite'
-import vue from '@vitejs/plugin-vue'
+import { defineConfig } from "vite";
+import vue from "@vitejs/plugin-vue";
 
 export default defineConfig({
   plugins: [vue()],
   server: {
-    // Required for Docker mapping
-    host: '0.0.0.0',
+    host: "0.0.0.0",
     port: 5173,
-    // HMR Port must be explicit for the proxy to work correctly
+    watch: {
+      usePolling: true
+    },
     hmr: {
-      clientPort: 80 
+      clientPort: 8080
     }
   }
-})
+});

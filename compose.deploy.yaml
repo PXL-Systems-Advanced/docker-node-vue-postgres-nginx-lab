@@ -2,55 +2,40 @@ name: lab-deploy
 
 services:
   db:
-    image: postgres:16-alpine
-    restart: always
+    image: postgres:17-alpine
+    restart: unless-stopped
     environment:
       POSTGRES_DB: ${POSTGRES_DB}
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     volumes:
       - db-data:/var/lib/postgresql/data
-      # In real deploy, you wouldn't mount init.sql like this, but fine for lab
-      # since this lab doesn't contain migrations or a proper DB seeding strategy
       - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
-    networks:
-      - app-net
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
       interval: 5s
       timeout: 5s
       retries: 5
 
   backend:
     image: ${DOCKERHUB_USERNAME}/lab-backend:main
-    restart: always
-    env_file: .env
+    restart: unless-stopped
     environment:
-      NODE_ENV: production
       DB_HOST: db
-      DB_PORT: 5432
       DB_NAME: ${POSTGRES_DB}
       DB_USER: ${POSTGRES_USER}
       DB_PASSWORD: ${POSTGRES_PASSWORD}
-      PORT: ${BACKEND_PORT:-3000}
     depends_on:
       db:
         condition: service_healthy
-    networks:
-      - app-net
 
   web:
     image: ${DOCKERHUB_USERNAME}/lab-web:main
-    restart: always
+    restart: unless-stopped
     ports:
-      - "80:80"
+      - "127.0.0.1:8080:80"
     depends_on:
       - backend
-    networks:
-      - app-net
-
-networks:
-  app-net:
 
 volumes:
   db-data:

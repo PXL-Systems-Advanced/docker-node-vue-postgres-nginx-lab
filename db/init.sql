@@ -5,4 +5,4 @@ CREATE TABLE IF NOT EXISTS todos (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-INSERT INTO todos (title) VALUES ('Docker Lab Initialized');
+INSERT INTO todos (title) VALUES ('Docker lab initialized');
